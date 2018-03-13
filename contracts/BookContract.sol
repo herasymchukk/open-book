@@ -25,7 +25,7 @@ contract BookContract is Util {
 
         for (uint8 i = 0; i < authors.length; i++) {
             address author = authors[i];
-            uint256 revenue = msg.value / revenueRates[author];
+            uint256 revenue = calculateRevenue(msg.value, revenueRates[author]);
             author.transfer(revenue);
         }
 
@@ -33,14 +33,33 @@ contract BookContract is Util {
         PaymentEvent(msg.sender, msg.value);
     }
 
-    // connector weight, represented in ppm (1ppm = 0.0001%), 1-1000000
+    // `_rate` value represented in ppm (10000 ppm = 1%), 1-1000000
     function setRevenueRate(address _author, uint256 _rate) public 
         notThis(_author)
         validAddress(_author)
         greaterThanZero(_rate)
     {
+        require(checkRevenueRate(_rate));
+
         revenueRates[_author] = _rate;
         RevenueChangedEvent(_author, _rate);
+    }
+
+    function checkRevenueRate(uint256 _rate) private view returns(bool) {
+        require(_rate >= 10000 && _rate <= 1000000);
+        uint256 currentRate;
+        for (uint8 i = 0; i < authors.length; i++) {
+            currentRate = safeAdd(currentRate, revenueRates[authors[i]]);
+        }
+        return safeAdd(currentRate, _rate) > 1000000;
+    }
+
+    function calculateRevenue(uint256 _value, uint256 _rate) private pure returns(uint256 revenue) {
+        if (_rate < 100000 || _rate >= 100000 && _rate <= 1000000) {
+            revenue = safeMul(_value, _rate) / 1000000;
+        } else {
+            revenue = _value;
+        }
     }
 
 }
