@@ -25,10 +25,11 @@ contract AssetContract is Util, Ownable {
 		bool isAuthor;
 	}
 
-	function AssetContract(string _assetId, uint256 _price, address[] _authors) public {
+	function AssetContract(string _assetId, uint256 _price, address[] _authors, address _owner) public {
 		require(nonEmpty(_assetId));
 		require(_authors.length > 0);
-
+	
+		owner = _owner;
 		assetId = _assetId;
 		authors = _authors;
 		price = _price;
@@ -100,6 +101,10 @@ contract AssetContract is Util, Ownable {
 
 	function getAuthors() public view returns(address[]) {
 		return authors;
+	}
+
+	function verifyBuyer(address _buyer) public view returns(bool) {
+		return buyers[_buyer];
 	}
 
 }
