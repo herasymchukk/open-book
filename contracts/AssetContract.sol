@@ -1,9 +1,23 @@
-pragma solidity ^0.4.11;
+/*
+	Copyright 2018 Open Store Initiative
+
+	Licensed under the Apache License, Version 2.0 (the "License");
+	you may not use this file except in compliance with the License.
+	You may obtain a copy of the License at
+
+			http://www.apache.org/licenses/LICENSE-2.0
+
+	Unless required by applicable law or agreed to in writing, software
+	distributed under the License is distributed on an "AS IS" BASIS,
+	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+	See the License for the specific language governing permissions and
+	limitations under the License.
+*/
+pragma solidity ^0.4.21;
 
 import "./util/Util.sol";
-import "./util/Ownable.sol";
 
-contract AssetContract is Util, Ownable {
+contract AssetContract is Util {
 
 	uint256 private constant MIN_REVENUE_RATE   = 10000;   // 1%
 	uint256 private constant TEN_PERCENT_IN_PPM = 100000;  // 10%
@@ -29,7 +43,7 @@ contract AssetContract is Util, Ownable {
 		require(nonEmpty(_assetId));
 		require(_authors.length > 0);
 	
-		owner = _owner;
+		currentOwner = _owner;
 		assetId = _assetId;
 		authors = _authors;
 		price = _price;
@@ -53,7 +67,7 @@ contract AssetContract is Util, Ownable {
 
 		soldCount = safeAdd(soldCount, 1);
 		buyers[msg.sender] = true;
-		PaymentEvent(msg.sender, msg.value);
+		emit PaymentEvent(msg.sender, msg.value);
 	}
 
 	// `_rate` value is represented in ppm (10000 ppm = 1%), 1-1000000
@@ -67,7 +81,7 @@ contract AssetContract is Util, Ownable {
 		require(checkRevenueRate(_rate));
 
 		revenueRates[_author].revenueRate = _rate;
-		RevenueRateChangedEvent(_author, _rate);
+		emit RevenueRateChangedEvent(_author, _rate);
 	}
 
 	function checkRevenueRate(uint256 _rate) public view returns(bool) {
@@ -88,7 +102,7 @@ contract AssetContract is Util, Ownable {
 	function changePrice(uint256 _price) public onlyOwner {
 		uint256 oldPrice = price;
 		price = _price;
-		PriceChangedEvent(oldPrice, price);
+		emit PriceChangedEvent(oldPrice, price);
 	}
 
 	function calculateRevenue(uint256 _value, uint256 _rate) public pure returns(uint256 revenue) {

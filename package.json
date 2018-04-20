@@ -1,24 +1,24 @@
 {
-	"name": "open-book",
+	"name": "open-store-initiative",
 	"version": "1.0.0",
-	"description": "Open Book smart contracts",
+	"description": "Open Store Initiative smart contracts",
 	"scripts": {
 		"localnet": "ganache-cli",
 		"test": "solium -d contracts/ && truffle test"
 	},
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/herasymchukk/open-book.git"
+		"url": "git+https://github.com/herasymchukk/open-store-initiative.git"
 	},
 	"bugs": {
-		"url": "https://github.com/herasymchukk/open-book/issues"
+		"url": "https://github.com/herasymchukk/open-store-initiative/issues"
 	},
 	"devDependencies": {
 		"ganache-cli": "^6.1.0",
 		"solium": "^1.1.5",
-		"truffle": "^4.1.3",
+		"truffle": "^4.1.6",
 		"mocha": "^5.0.4",
 		"chai": "^4.1.2"
 	},
-	"homepage": "https://github.com/herasymchukk/open-book#readme"
+	"homepage": "https://github.com/herasymchukk/open-store-initiative#readme"
 }
