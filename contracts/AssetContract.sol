@@ -15,31 +15,14 @@
 */
 pragma solidity ^0.4.21;
 
-import "./util/Util.sol";
+import "./traits/IAssetContract.sol";
+import "./PaymentContract.sol";
 
-contract AssetContract is Util {
+contract AssetContract is IAssetContract {
 
-	uint256 private constant MIN_REVENUE_RATE   = 10000;   // 1%
-	uint256 private constant TEN_PERCENT_IN_PPM = 100000;  // 10%
-	uint256 private constant MAX_REVENUE_RATE   = 1000000; // 100%
+	PaymentContract public paymentContract;
 
-	string public assetId;	
-	uint256 public price;
-	uint256 public soldCount;
-	address[] public authors;
-	mapping(address => Revenue) public revenueRates;
-	mapping(address => bool) public buyers;
-
-	event PaymentEvent(address indexed _sender, uint256 _value);
-	event RevenueRateChangedEvent(address indexed _author, uint256 _rate);
-	event PriceChangedEvent(uint256 _oldPrice, uint256 _newPrice);
-
-	struct Revenue {
-		uint256 revenueRate;
-		bool isAuthor;
-	}
-
-	function AssetContract(string _assetId, uint256 _price, address[] _authors, address _owner) public {
+	function AssetContract(string _assetId, uint256 _price, address[] _authors, address _owner, PaymentContract _paymentContract) public {
 		require(nonEmpty(_assetId));
 		require(_authors.length > 0);
 	
@@ -48,6 +31,7 @@ contract AssetContract is Util {
 		authors = _authors;
 		price = _price;
 		soldCount = 0;
+		paymentContract = _paymentContract;
 
 		for (uint256 i = 0; i < _authors.length; i++) {
 			revenueRates[_authors[i]] = Revenue(0, true);
@@ -58,10 +42,18 @@ contract AssetContract is Util {
 		require(msg.value >= price);
 		require(getSummaryRate() == MAX_REVENUE_RATE);
 
+		uint256 value = msg.value;
+		uint256 fee = paymentContract.calculateFee(value);
+		if (fee > 0) {
+			address platformRevenueAddress = paymentContract.platformRevenueAddress();
+			platformRevenueAddress.transfer(fee);
+			value = safeSub(value, fee);
+		}
+
 		for (uint256 i = 0; i < authors.length; i++) {
 			address authorAddress = authors[i];
 			Revenue storage revenueMeta = revenueRates[authorAddress];
-			uint256 revenue = calculateRevenue(msg.value, revenueMeta.revenueRate);
+			uint256 revenue = calculateRevenue(value, revenueMeta.revenueRate);
 			authorAddress.transfer(revenue);
 		}
 
@@ -84,41 +76,10 @@ contract AssetContract is Util {
 		emit RevenueRateChangedEvent(_author, _rate);
 	}
 
-	function checkRevenueRate(uint256 _rate) public view returns(bool) {
-		require(_rate >= MIN_REVENUE_RATE && _rate <= MAX_REVENUE_RATE);
-		uint256 summaryRate = getSummaryRate();
-		return safeAdd(summaryRate, _rate) <= MAX_REVENUE_RATE;
-	}
-
-	function getSummaryRate() private view returns(uint256) {
-		uint256 rate = 0;
-		for (uint256 i = 0; i < authors.length; i++) {
-			Revenue storage revenueMeta = revenueRates[authors[i]];
-			rate = safeAdd(rate, revenueMeta.revenueRate);
-		}
-		return rate;
-	}
-
 	function changePrice(uint256 _price) public onlyOwner {
 		uint256 oldPrice = price;
 		price = _price;
 		emit PriceChangedEvent(oldPrice, price);
-	}
-
-	function calculateRevenue(uint256 _value, uint256 _rate) public pure returns(uint256 revenue) {
-		if (_rate < TEN_PERCENT_IN_PPM || _rate >= TEN_PERCENT_IN_PPM && _rate <= MAX_REVENUE_RATE) {
-			revenue = safeMul(_value, _rate) / MAX_REVENUE_RATE;
-		} else {
-			revenue = _value;
-		}
-	}
-
-	function getAuthors() public view returns(address[]) {
-		return authors;
-	}
-
-	function verifyBuyer(address _buyer) public view returns(bool) {
-		return buyers[_buyer];
 	}
 
 }

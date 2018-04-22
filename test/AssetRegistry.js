@@ -15,6 +15,7 @@
 */
 const AssetRegistry = artifacts.require('AssetRegistry.sol');
 const AssetContract = artifacts.require('AssetContract.sol');
+const PaymentContract = artifacts.require('PaymentContract.sol');
 
 contract("AssetRegistry", (accounts) => {
 
@@ -28,9 +29,11 @@ contract("AssetRegistry", (accounts) => {
 		var txLogs;
 		var assetOwner;
 		var assetAddress;
+		var paymentContract;
 
 		beforeEach(async () => {
-			registry = await AssetRegistry.new();
+			paymentContract = await PaymentContract.new(0, accounts[8]);
+			registry = await AssetRegistry.new(paymentContract.address);
 			txReceipt = await registry.deployAssetContract(assetId, price, authors);
 			txLogs = txReceipt.logs[0];
 			assetOwner = txLogs.args._owner;

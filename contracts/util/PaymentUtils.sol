@@ -13,12 +13,22 @@
 	See the License for the specific language governing permissions and
 	limitations under the License.
 */
-const Util = artifacts.require("Util.sol");
-const PaymentContract = artifacts.require("PaymentContract.sol");
-const AssetRegistry = artifacts.require("AssetRegistry.sol");
+pragma solidity ^0.4.21;
 
-module.exports = async (deployer) => {
-	deployer.deploy(Util);
-	await deployer.deploy(PaymentContract, 0, "0x0");
-	deployer.deploy(AssetRegistry, PaymentContract.address);
-};
+import "./Util.sol";
+
+contract PaymentUtils is Util {
+
+	uint256 public constant MIN_REVENUE_RATE   = 10000;   // 1%
+	uint256 public constant TEN_PERCENT_IN_PPM = 100000;  // 10%
+	uint256 public constant MAX_REVENUE_RATE   = 1000000; // 100%
+
+	function calculateRevenue(uint256 _value, uint256 _rate) public pure returns(uint256 revenue) {
+		if (_rate < TEN_PERCENT_IN_PPM || _rate >= TEN_PERCENT_IN_PPM && _rate <= MAX_REVENUE_RATE) {
+			revenue = safeMul(_value, _rate) / MAX_REVENUE_RATE;
+		} else {
+			revenue = _value;
+		}
+	}
+
+}

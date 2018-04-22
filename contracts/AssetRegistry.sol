@@ -13,20 +13,24 @@
 	See the License for the specific language governing permissions and
 	limitations under the License.
 */
-pragma solidity ^0.4.11;
+pragma solidity ^0.4.21;
 
 import "./AssetContract.sol";
+import "./PaymentContract.sol";
 
 contract AssetRegistry {
 
+	PaymentContract public paymentContract;
 	mapping(address => address[]) public assetsPerOnwer;
 
 	event AssetDeployedEvent(address indexed _owner, address indexed _asset);
 
-	function AssetRegistry() public {}
+	function AssetRegistry(PaymentContract _paymentContract) public {
+		paymentContract = _paymentContract;
+	}
 
 	function deployAssetContract(string _assetId, uint256 _price, address[] _authors) public returns(address) {
-		AssetContract asset = new AssetContract(_assetId, _price, _authors, msg.sender);
+		AssetContract asset = new AssetContract(_assetId, _price, _authors, msg.sender, paymentContract);
 		assetsPerOnwer[msg.sender].push(asset);
 		emit AssetDeployedEvent(msg.sender, asset);
 		return asset;
